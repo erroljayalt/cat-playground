@@ -2,7 +2,9 @@
 
 A 3D animation built with [three.js](https://threejs.org/): two tabby cats, orange **Marmalade** and gray-and-black **Smokey**, playing together.
 
-Open `index.html` in a browser to watch. It loads three.js from a CDN, so it needs an internet connection.
+**▶ Play it here: https://erroljayalt.github.io/cat-playground/**
+
+You can also open `index.html` in a browser. It loads three.js from a CDN, so it needs an internet connection.
 
 ## Places
 
