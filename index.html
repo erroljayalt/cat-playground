@@ -1,0 +1,1470 @@
+<!doctype html>
+<html lang="en">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Marmalade &amp; Smokey</title>
+<meta charset="utf-8">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&display=swap">
+<style>
+/* Layout: full-bleed 3D yard; a name tag top-left, a toy-bar of actions along the bottom. */
+:root{
+  --sky:#3a3430;
+  --panel:rgba(255,252,246,.86);
+  --ink:#2a2420;
+  --muted:#6d625a;
+  --accent:#e0782f;
+  --accent-ink:#ffffff;
+  --chip:#fff;
+  --line:rgba(60,40,20,.14);
+  --cat1:#e0782f;
+  --cat2:#6f747c;
+  --display:"Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  --body:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky:#3a3430; --panel:rgba(28,30,36,.86); --ink:#f3ece4; --muted:#b9ada2;
+    --accent:#f08c45; --accent-ink:#1d140d; --chip:#2b2e36; --line:rgba(255,230,200,.16);
+    --cat1:#f08c45; --cat2:#a9aeb6; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --sky:#3a3430; --panel:rgba(28,30,36,.86); --ink:#f3ece4; --muted:#b9ada2;
+  --accent:#f08c45; --accent-ink:#1d140d; --chip:#2b2e36; --line:rgba(255,230,200,.16);
+  --cat1:#f08c45; --cat2:#a9aeb6; color-scheme:dark;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--sky);color:var(--ink);font-family:var(--body)}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+
+.tag{
+  position:fixed;
+  top:calc(16px + env(safe-area-inset-top,0px));
+  left:max(16px, env(safe-area-inset-left,0px));
+  background:var(--panel);backdrop-filter:blur(8px);
+  border:1px solid var(--line);border-radius:14px;
+  padding:10px 14px;display:flex;flex-direction:column;gap:4px;max-width:calc(100% - 32px);
+}
+.tag h1{font-family:var(--display);font-weight:600;font-size:20px;margin:0 0 2px;letter-spacing:.2px}
+.tag .doing{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tag .doing b{font-weight:600;color:var(--ink)}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.dot.c1{background:var(--cat1)}
+.dot.c2{background:var(--cat2)}
+.tag .dot{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.4}}
+
+.bar{
+  position:fixed;left:0;right:0;
+  bottom:0;
+  padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+  display:flex;justify-content:center;pointer-events:none;
+}
+.bar-inner{
+  pointer-events:auto;background:var(--panel);backdrop-filter:blur(8px);
+  border:1px solid var(--line);border-radius:18px;padding:10px;
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:800px;
+}
+.bar button,.bar label{
+  font-family:var(--display);font-weight:500;font-size:14px;
+  border:1px solid var(--line);background:var(--chip);color:var(--ink);
+  border-radius:999px;padding:7px 13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+}
+.bar button:hover{border-color:var(--accent)}
+.bar button:focus-visible,.bar input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.who{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px;background:var(--chip)}
+.bar .who button{border:none;padding:5px 11px;background:transparent}
+.bar .who button.on{background:var(--ink);color:var(--chip)}
+.bar .sep{width:1px;background:var(--line);margin:2px 2px}
+.bar .row{width:100%;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.bar .lbl{font-family:var(--display);font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.bar input{accent-color:var(--accent);margin:0}
+.hint{font-size:12px;color:var(--muted);width:100%;text-align:center}
+@media (max-width:520px){
+  .bar button,.bar label{font-size:13px;padding:6px 10px}
+  .bar .sep{display:none}
+}
+</style>
+
+<div id="stage"></div>
+
+<div class="tag" aria-live="polite">
+  <h1>Marmalade &amp; Smokey</h1>
+  <div class="doing"><span class="dot c1"></span><b>Marmalade</b><span id="status-0">Waking up</span></div>
+  <div class="doing"><span class="dot c2"></span><b>Smokey</b><span id="status-1">Waking up</span></div>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <div class="row">
+      <span class="lbl">Place</span>
+      <div class="who" role="group" aria-label="Where the cats play">
+        <button id="p-bedroom" data-place="bedroom">Bedroom</button>
+        <button id="p-yard" data-place="yard">Yard</button>
+        <button id="p-beach" data-place="beach">Beach</button>
+        <button id="p-snow" data-place="snow">Snowy garden</button>
+      </div>
+    </div>
+    <div class="who" role="group" aria-label="Which cat the buttons control">
+      <button id="w-0" data-who="0"><span class="dot c1"></span>Marmalade</button>
+      <button id="w-1" data-who="1"><span class="dot c2"></span>Smokey</button>
+      <button id="w-both" data-who="both" class="on">Both</button>
+    </div>
+    <button id="b-auto" class="on" data-act="auto" aria-pressed="true">Autoplay</button>
+    <span class="sep"></span>
+    <button id="b-chase" data-act="chase">Chase</button>
+    <button id="b-pounce" data-act="pounce">Pounce</button>
+    <button id="b-roll" data-act="roll">Roll over</button>
+    <button id="b-zoom" data-act="zoom">Zoomies</button>
+    <button id="b-tail" data-act="tailChase">Tail chase</button>
+    <button id="b-stretch" data-act="stretch">Stretch</button>
+    <button id="b-tag" data-act="chaseFriend">Play tag</button>
+    <button id="b-nap" data-act="nap">Nap</button>
+    <button id="b-throw" data-act="throw">Throw yarn</button>
+    <span class="sep"></span>
+    <label for="follow"><input type="checkbox" id="follow" checked> Follow cam</label>
+    <div class="hint">Pick a cat, then an action · drag to orbit · scroll to zoom · tap the ground to drop the yarn</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+const TAU = Math.PI * 2;
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const damp = (a, b, r, dt) => a + (b - a) * (1 - Math.exp(-r * dt));
+const angDiff = (a, b) => { let d = (b - a) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return d; };
+const ease = s => s < 0 ? 0 : s > 1 ? 1 : s * s * (3 - 2 * s);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- renderer / scene ----------
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(stage.clientWidth, stage.clientHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x3a3430);
+
+const camera = new THREE.PerspectiveCamera(45, stage.clientWidth / stage.clientHeight, 0.1, 120);
+camera.position.set(6, 5.5, 9);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.47;
+controls.minDistance = 2;
+controls.maxDistance = 18;
+controls.target.set(0, 0.5, 0);
+
+const hemi = new THREE.HemisphereLight(0xfff6e8, 0x8a7560, 0.62); scene.add(hemi);
+const ambient = new THREE.AmbientLight(0xffffff, 0.12); scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xfff1dc, 0.75);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 40 });
+sun.shadow.bias = -0.0006;
+scene.add(sun);
+
+const mat = (color, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.9 }, o));
+function add(parent, geo, material, pos, scale, rot, shadow = true) {
+  const m = new THREE.Mesh(geo, material);
+  if (pos) m.position.set(pos[0], pos[1], pos[2]);
+  if (scale) m.scale.set(scale[0], scale[1], scale[2]);
+  if (rot) m.rotation.set(rot[0], rot[1], rot[2]);
+  m.castShadow = shadow; m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+
+function canvasTex(w, h, draw) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  return new THREE.CanvasTexture(c);
+}
+
+// ---------- places ----------
+// Each builder fills its own group and returns the place's floor, bounds, furniture
+// footprints (obst), nap spots, start positions and lighting.
+// bounds: { r } for a round play area, { hx, hz } for a rectangle.
+
+function fence(g, R) {
+  const wood = mat(0xc89a6a);
+  const posts = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 0.62, 0.1), wood, 72);
+  posts.castShadow = true;
+  const dummy = new THREE.Object3D();
+  for (let i = 0; i < 72; i++) {
+    const a = i / 72 * TAU;
+    dummy.position.set(Math.cos(a) * R, 0.31, Math.sin(a) * R);
+    dummy.rotation.set(0, -a, 0);
+    dummy.updateMatrix();
+    posts.setMatrixAt(i, dummy.matrix);
+  }
+  g.add(posts);
+  for (const h of [0.22, 0.48]) add(g, new THREE.TorusGeometry(R, 0.035, 6, 120), wood, [0, h, 0], null, [Math.PI / 2, 0, 0]);
+}
+
+function buildYard() {
+  const g = new THREE.Group();
+  const R = 9.3;
+  add(g, new THREE.CircleGeometry(60, 48), mat(0x86b862), [0, -0.01, 0], null, [-Math.PI / 2, 0, 0], false);
+  const floor = add(g, new THREE.CircleGeometry(R, 72), mat(0x9bd06f), [0, 0, 0], null, [-Math.PI / 2, 0, 0], false);
+  fence(g, R);
+  const petalCols = [0xffffff, 0xffd34d, 0xff8fb1, 0xb69cff];
+  for (let i = 0; i < 70; i++) {
+    const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * (R - 0.6);
+    add(g, new THREE.SphereGeometry(0.05, 8, 6), mat(petalCols[i % 4]), [Math.cos(a) * r, 0.04, Math.sin(a) * r], [1, 0.5, 1], null, false);
+  }
+  const leafCols = [0x4f9a4a, 0x5fae55, 0x3f8a46];
+  for (let i = 0; i < 16; i++) {
+    const a = i / 16 * TAU + rand(-0.15, 0.15), r = rand(12.5, 18);
+    const t = new THREE.Group(); t.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); g.add(t);
+    const s = rand(0.8, 1.4);
+    add(t, new THREE.CylinderGeometry(0.18 * s, 0.25 * s, 1.6 * s, 8), mat(0x8a5a3a), [0, 0.8 * s, 0]);
+    add(t, new THREE.IcosahedronGeometry(1.1 * s, 0), mat(leafCols[i % 3], { flatShading: true }), [0, 2.2 * s, 0]);
+    add(t, new THREE.IcosahedronGeometry(0.8 * s, 0), mat(leafCols[(i + 1) % 3], { flatShading: true }), [0.5 * s, 2.9 * s, 0.2 * s]);
+  }
+  for (let i = 0; i < 22; i++) {
+    const a = rand(0, TAU), r = rand(10.2, 11.8);
+    add(g, new THREE.IcosahedronGeometry(rand(0.4, 0.7), 0), mat(leafCols[i % 3], { flatShading: true }), [Math.cos(a) * r, 0.3, Math.sin(a) * r], [1, 0.8, 1]);
+  }
+  for (let i = 0; i < 7; i++) {
+    const c = new THREE.Group();
+    const a = rand(0, TAU), r = rand(18, 30);
+    c.position.set(Math.cos(a) * r, rand(9, 14), Math.sin(a) * r);
+    for (let k = 0; k < 4; k++) add(c, new THREE.SphereGeometry(rand(1, 1.8), 12, 10), mat(0xffffff, { roughness: 1 }), [k * 1.3 - 2, rand(-0.3, 0.4), rand(-0.5, 0.5)], null, null, false);
+    g.add(c);
+  }
+  // a garden bench to nap under the shade of
+  const bench = new THREE.Group(); bench.position.set(-3.5, 0, -4.5); bench.rotation.y = 0.6; g.add(bench);
+  const benchWood = mat(0xb07a4f);
+  for (const z of [-0.18, 0, 0.18]) add(bench, new THREE.BoxGeometry(1.8, 0.05, 0.14), benchWood, [0, 0.5, z]);
+  for (const x of [-0.8, 0.8]) for (const z of [-0.2, 0.2]) add(bench, new THREE.BoxGeometry(0.07, 0.5, 0.07), mat(0x3e3e3e), [x, 0.25, z]);
+  add(bench, new THREE.BoxGeometry(1.8, 0.4, 0.05), benchWood, [0, 0.8, -0.25]);
+  return {
+    group: g, floor, bounds: { r: R }, walls: [],
+    obst: [{ x0: -4.4, x1: -2.6, z0: -5.3, z1: -3.7, h: 0.85 }], // bench
+    nap: { x: -1.2, z: -2.6, y: 0, where: 'in a sunny patch' },
+    napAlt: { x: 2.4, z: 2.6, y: 0, where: 'on the grass' },
+    start: { cats: [[0.8, 0.4, 0.4], [-1.6, -1.2, 1.2]], ball: [2, 1.8] },
+    cam: [5, 3.8, 7.5],
+    light: { bg: 0xbfe3f2, fog: [0xbfe3f2, 22, 48], hemi: [0xffffff, 0x7a9a5a, 0.75], amb: 0, sun: [0xfff4e0, 0.95, [7, 12, 5]] },
+  };
+}
+
+function buildBedroom() {
+const scene = new THREE.Group();
+const ROOM_W = 14, ROOM_D = 12, WALL_H = 3.6;
+const HX = ROOM_W / 2, HZ = ROOM_D / 2;
+
+const planks = canvasTex(512, 512, (x, W, H) => {
+  const rows = 8, h = H / rows;
+  for (let r = 0; r < rows; r++) {
+    let u = -Math.random() * 200;
+    while (u < W) {
+      const len = rand(160, 300);
+      x.fillStyle = `hsl(28, 40%, ${50 + rand(-7, 7)}%)`;
+      x.fillRect(u, r * h, len, h);
+      x.strokeStyle = 'rgba(90,55,25,.18)'; x.lineWidth = 1.5;
+      for (let g = 0; g < 4; g++) {
+        const gy = r * h + rand(6, h - 6);
+        x.beginPath(); x.moveTo(u, gy);
+        x.bezierCurveTo(u + len * 0.3, gy + rand(-4, 4), u + len * 0.7, gy + rand(-4, 4), u + len, gy);
+        x.stroke();
+      }
+      x.fillStyle = 'rgba(60,35,15,.55)'; x.fillRect(u + len - 1.5, r * h, 3, h);
+      u += len;
+    }
+    x.fillStyle = 'rgba(60,35,15,.6)'; x.fillRect(0, r * h, W, 2.5);
+  }
+});
+planks.wrapS = planks.wrapT = THREE.RepeatWrapping; planks.repeat.set(3, 2.6); planks.anisotropy = 4;
+const floor = add(scene, new THREE.PlaneGeometry(ROOM_W, ROOM_D), mat(0xffffff, { map: planks, roughness: 0.65 }), [0, 0, 0], null, [-Math.PI / 2, 0, 0], false);
+
+const wallMat = mat(0xc9d6c3);
+const trimMat = mat(0xf4f1ea);
+const oak = mat(0xd2a679);
+const walnut = mat(0x7a5236);
+const offWhite = mat(0xf1ece2);
+
+// walls on the camera's side hide themselves, like a dollhouse
+const walls = [];
+function wall(width, x, z, rotY, hide) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rotY; scene.add(g);
+  add(g, new THREE.BoxGeometry(width + 0.4, WALL_H, 0.2), wallMat, [0, WALL_H / 2, -0.1], null, null, false);
+  add(g, new THREE.BoxGeometry(width, 0.16, 0.05), trimMat, [0, 0.08, 0.025], null, null, false);
+  walls.push({ g, hide });
+  return g;
+}
+// each wall's local +z faces into the room
+const backWall = wall(ROOM_W, 0, -HZ, 0, () => camera.position.z < -HZ);           // local x = world x
+const frontWall = wall(ROOM_W, 0, HZ, Math.PI, () => camera.position.z > HZ);      // local x = -world x
+const leftWall = wall(ROOM_D, -HX, 0, Math.PI / 2, () => camera.position.x < -HX); // local x = -world z
+const rightWall = wall(ROOM_D, HX, 0, -Math.PI / 2, () => camera.position.x > HX); // local x = world z
+
+function artTexture(sky, hill1, hill2, sunCol) {
+  return canvasTex(256, 160, (x, W, H) => {
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, sky); g.addColorStop(1, '#fff6e6');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.fillStyle = sunCol; x.beginPath(); x.arc(W * 0.7, H * 0.38, 22, 0, TAU); x.fill();
+    x.fillStyle = hill1; x.beginPath(); x.moveTo(0, H); x.quadraticCurveTo(W * 0.3, H * 0.35, W * 0.65, H); x.fill();
+    x.fillStyle = hill2; x.beginPath(); x.moveTo(W * 0.3, H); x.quadraticCurveTo(W * 0.75, H * 0.45, W, H * 0.8); x.lineTo(W, H); x.fill();
+  });
+}
+function picture(parent, w, h, pos, tex) {
+  add(parent, new THREE.BoxGeometry(w, h, 0.06), walnut, pos, null, null, false);
+  add(parent, new THREE.PlaneGeometry(w - 0.14, h - 0.14), mat(0xffffff, { map: tex, roughness: 0.8 }), [pos[0], pos[1], pos[2] + 0.035], null, null, false);
+}
+
+// back wall: window with curtains, bookshelf, painting over the bed
+{
+  const win = new THREE.Group(); win.position.set(-1, 2.1, 0); backWall.add(win);
+  const skyTex = canvasTex(256, 192, (x, W, H) => {
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#8fcbea'); g.addColorStop(1, '#e6f5fb');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.fillStyle = 'rgba(255,255,255,.9)';
+    for (const [cx, cy, s] of [[60, 50, 1], [180, 80, 0.8], [120, 130, 0.6]])
+      for (let i = 0; i < 4; i++) { x.beginPath(); x.ellipse(cx + i * 18 * s, cy + (i % 2) * 6, 22 * s, 13 * s, 0, 0, TAU); x.fill(); }
+  });
+  add(win, new THREE.PlaneGeometry(2.3, 1.7), new THREE.MeshBasicMaterial({ map: skyTex }), [0, 0, 0.02], null, null, false);
+  for (const y of [-0.9, 0.9]) add(win, new THREE.BoxGeometry(2.5, 0.12, 0.12), trimMat, [0, y, 0.06], null, null, false);
+  for (const x of [-1.2, 1.2]) add(win, new THREE.BoxGeometry(0.12, 1.9, 0.12), trimMat, [x, 0, 0.06], null, null, false);
+  add(win, new THREE.BoxGeometry(0.06, 1.7, 0.06), trimMat, [0, 0, 0.06], null, null, false);
+  add(win, new THREE.BoxGeometry(2.3, 0.06, 0.06), trimMat, [0, 0, 0.06], null, null, false);
+  add(win, new THREE.BoxGeometry(2.7, 0.08, 0.3), trimMat, [0, -0.97, 0.15], null, null, false);
+  add(win, new THREE.CylinderGeometry(0.025, 0.025, 4, 8), walnut, [0, 1.45, 0.18], null, [0, 0, Math.PI / 2], false);
+  const curtain = mat(0xe7b29d, { roughness: 1 });
+  for (const s of [-1, 1]) for (let k = 0; k < 6; k++)
+    add(win, new THREE.CylinderGeometry(0.085, 0.1, 2.75, 10), curtain, [s * (1.3 + k * 0.12), 0.07, 0.16 + (k % 2) * 0.04], null, null, false);
+
+  const shelf = new THREE.Group(); shelf.position.set(-4.8, 0, 0.26); backWall.add(shelf);
+  for (const x of [-0.9, 0.9]) add(shelf, new THREE.BoxGeometry(0.05, 2.4, 0.5), offWhite, [x, 1.2, 0]);
+  add(shelf, new THREE.BoxGeometry(1.8, 2.4, 0.03), offWhite, [0, 1.2, -0.235]);
+  const bookCols = [0xc8553d, 0x2f5d62, 0xf2a541, 0x5873a8, 0x8b5e83, 0xe8d7b5, 0x3e3e3e];
+  [0.03, 0.62, 1.22, 1.82, 2.38].forEach((y, si) => {
+    add(shelf, new THREE.BoxGeometry(1.8, 0.05, 0.5), offWhite, [0, y, 0]);
+    if (si === 4) return;
+    let x = -0.84;
+    while (x < 0.8) {
+      const w = rand(0.06, 0.12), h = rand(0.3, 0.44);
+      if (si === 2 && x > 0.3) { // a small plant on the middle shelf
+        add(shelf, new THREE.CylinderGeometry(0.1, 0.08, 0.16, 12), mat(0xc8714d), [0.55, y + 0.105, 0]);
+        add(shelf, new THREE.IcosahedronGeometry(0.17, 0), mat(0x5fae55, { flatShading: true }), [0.55, y + 0.3, 0]);
+        break;
+      }
+      add(shelf, new THREE.BoxGeometry(w, h, 0.34), mat(bookCols[Math.floor(Math.random() * bookCols.length)]), [x + w / 2, y + 0.025 + h / 2, 0.02], null, [0, 0, x > 0.6 ? 0.12 : 0]);
+      x += w + 0.008;
+    }
+  });
+  picture(backWall, 1.5, 1.0, [3.4, 2.6, 0.03], artTexture('#f6c7a8', '#7fa77a', '#4f7f6a', '#f28f5c'));
+}
+
+// left wall: wardrobe and two small pictures
+{
+  const ward = new THREE.Group(); ward.position.set(2, 0, 0.5); leftWall.add(ward);
+  add(ward, new THREE.BoxGeometry(3.0, 0.12, 0.95), walnut, [0, 0.06, 0]);
+  add(ward, new THREE.BoxGeometry(3.0, 3.1, 1.0), oak, [0, 1.67, 0]);
+  add(ward, new THREE.BoxGeometry(3.1, 0.1, 1.05), oak, [0, 3.25, 0]);
+  add(ward, new THREE.BoxGeometry(0.03, 2.9, 0.02), walnut, [0, 1.67, 0.505], null, null, false);
+  for (const x of [-0.12, 0.12]) add(ward, new THREE.SphereGeometry(0.04, 10, 8), walnut, [x, 1.6, 0.53], null, null, false);
+  picture(leftWall, 0.8, 1.0, [-2.3, 2.2, 0.03], artTexture('#b9d4ee', '#e9a15b', '#c8553d', '#ffffff'));
+  picture(leftWall, 0.9, 0.7, [-3.5, 2.45, 0.03], artTexture('#e9d8f2', '#8b5e83', '#5873a8', '#f2c94c'));
+}
+
+// right wall: desk with laptop, wall clock
+{
+  const desk = new THREE.Group(); desk.position.set(2.5, 0, 0.45); rightWall.add(desk);
+  add(desk, new THREE.BoxGeometry(2.2, 0.07, 0.9), oak, [0, 1.07, 0]);
+  for (const x of [-1.03, 1.03]) for (const z of [-0.38, 0.38]) add(desk, new THREE.BoxGeometry(0.07, 1.04, 0.07), walnut, [x, 0.52, z]);
+  add(desk, new THREE.BoxGeometry(0.62, 0.03, 0.42), mat(0xb8bcc4, { metalness: 0.4, roughness: 0.4 }), [0.1, 1.12, 0.05]);
+  const scr = new THREE.Group(); scr.position.set(0.1, 1.13, -0.16); scr.rotation.x = -0.25; desk.add(scr);
+  add(scr, new THREE.BoxGeometry(0.62, 0.42, 0.02), mat(0xb8bcc4, { metalness: 0.4, roughness: 0.4 }), [0, 0.21, 0]);
+  add(scr, new THREE.PlaneGeometry(0.56, 0.36), new THREE.MeshBasicMaterial({ color: 0x9fc6e8 }), [0, 0.21, 0.012], null, null, false);
+  add(desk, new THREE.CylinderGeometry(0.06, 0.055, 0.13, 14), mat(0xf2a541), [0.65, 1.17, 0.1]);
+  add(desk, new THREE.CylinderGeometry(0.12, 0.09, 0.2, 12), mat(0xc8714d), [-0.75, 1.2, -0.1]);
+  add(desk, new THREE.IcosahedronGeometry(0.22, 0), mat(0x4f9a4a, { flatShading: true }), [-0.75, 1.45, -0.1]);
+
+  const clock = new THREE.Group(); clock.position.set(-1.5, 2.6, 0.04); rightWall.add(clock);
+  add(clock, new THREE.CircleGeometry(0.32, 32), offWhite, [0, 0, 0], null, null, false);
+  add(clock, new THREE.TorusGeometry(0.32, 0.03, 8, 32), walnut, [0, 0, 0], null, null, false);
+  add(clock, new THREE.BoxGeometry(0.025, 0.2, 0.01), walnut, [0, 0.08, 0.01], null, [0, 0, -0.5], false);
+  add(clock, new THREE.BoxGeometry(0.025, 0.14, 0.01), walnut, [0.05, -0.03, 0.01], null, [0, 0, 2.1], false);
+}
+
+// front wall: door
+{
+  add(frontWall, new THREE.BoxGeometry(1.3, 2.45, 0.05), trimMat, [-4.5, 1.225, 0.02], null, null, false);
+  add(frontWall, new THREE.BoxGeometry(1.1, 2.3, 0.06), mat(0xefe6d6), [-4.5, 1.15, 0.05], null, null, false);
+  add(frontWall, new THREE.SphereGeometry(0.05, 10, 8), mat(0xc9a24a, { metalness: 0.6, roughness: 0.3 }), [-4.1, 1.1, 0.1], null, null, false);
+}
+
+// bed, nightstands with lamps
+{
+  const bed = new THREE.Group(); bed.position.set(3.4, 0, -3.7); scene.add(bed);
+  add(bed, new THREE.BoxGeometry(3.0, 0.45, 4.4), walnut, [0, 0.225, 0]);
+  add(bed, new THREE.BoxGeometry(3.2, 1.45, 0.15), walnut, [0, 0.72, -2.15]);
+  add(bed, new THREE.BoxGeometry(2.85, 0.35, 4.2), mat(0xf7f4ee), [0, 0.62, 0.05]);
+  const duvet = mat(0x5873a8);
+  add(bed, new THREE.BoxGeometry(3.0, 0.16, 2.9), duvet, [0, 0.86, 0.75]);
+  for (const s of [-1, 1]) add(bed, new THREE.BoxGeometry(0.04, 0.5, 2.9), duvet, [s * 1.5, 0.62, 0.75]);
+  add(bed, new THREE.BoxGeometry(3.0, 0.5, 0.04), duvet, [0, 0.62, 2.2]);
+  add(bed, new THREE.BoxGeometry(3.0, 0.17, 0.4), mat(0xe9edf5), [0, 0.87, -0.6]);
+  for (const x of [-0.65, 0.65]) add(bed, new THREE.SphereGeometry(0.5, 20, 12), mat(0xffffff), [x, 0.88, -1.6], [1.15, 0.28, 0.6]);
+
+  const shade = mat(0xfff0d6, { emissive: 0xffc98a, emissiveIntensity: 0.55, side: THREE.DoubleSide });
+  for (const x of [1.2, 5.6]) {
+    const ns = new THREE.Group(); ns.position.set(x, 0, -5.55); scene.add(ns);
+    add(ns, new THREE.BoxGeometry(0.8, 0.7, 0.7), oak, [0, 0.4, 0]);
+    for (const dx of [-0.33, 0.33]) add(ns, new THREE.BoxGeometry(0.06, 0.06, 0.6), walnut, [dx, 0.03, 0]);
+    add(ns, new THREE.BoxGeometry(0.66, 0.02, 0.02), walnut, [0, 0.5, 0.36], null, null, false);
+    add(ns, new THREE.CylinderGeometry(0.1, 0.12, 0.05, 16), walnut, [0, 0.775, 0]);
+    add(ns, new THREE.CylinderGeometry(0.02, 0.02, 0.35, 8), walnut, [0, 0.95, 0]);
+    add(ns, new THREE.CylinderGeometry(0.14, 0.22, 0.26, 20, 1, true), shade, [0, 1.17, 0], null, null, false);
+    const bulb = new THREE.PointLight(0xffc88a, 0.45, 7, 2); bulb.position.set(0, 1.15, 0); ns.add(bulb);
+  }
+}
+
+// rug
+const rugTex = canvasTex(256, 256, (x, W) => {
+  const cols = ['#c8553d', '#f2d0a4', '#588b8b', '#f2d0a4', '#c8553d', '#f6e3c6', '#588b8b', '#f6e3c6'];
+  cols.forEach((c, i) => { x.fillStyle = c; x.beginPath(); x.arc(W / 2, W / 2, W / 2 - i * 15, 0, TAU); x.fill(); });
+});
+add(scene, new THREE.CircleGeometry(2.4, 48), mat(0xffffff, { map: rugTex, roughness: 1 }), [0, 0.012, 1], [1.35, 1, 1], [-Math.PI / 2, 0, 0], false);
+
+// cat bed and scratching post
+const CAT_BED = { x: -4.8, z: 4.1 };
+add(scene, new THREE.CylinderGeometry(0.55, 0.58, 0.12, 24), mat(0xf0d9c4, { roughness: 1 }), [CAT_BED.x, 0.06, CAT_BED.z]);
+add(scene, new THREE.TorusGeometry(0.56, 0.17, 12, 32), mat(0xc9746a, { roughness: 1 }), [CAT_BED.x, 0.17, CAT_BED.z], null, [Math.PI / 2, 0, 0]);
+{
+  const post = new THREE.Group(); post.position.set(-6.2, 0, 4.8); scene.add(post);
+  const carpet = mat(0xcbb59a, { roughness: 1 });
+  add(post, new THREE.BoxGeometry(0.9, 0.1, 0.9), carpet, [0, 0.05, 0]);
+  const rope = canvasTex(32, 256, (x, W, H) => {
+    x.fillStyle = '#d8c39a'; x.fillRect(0, 0, W, H);
+    x.fillStyle = 'rgba(120,90,50,.45)'; for (let y = 0; y < H; y += 8) x.fillRect(0, y, W, 2);
+  });
+  rope.wrapT = THREE.RepeatWrapping; rope.repeat.set(1, 3);
+  add(post, new THREE.CylinderGeometry(0.15, 0.15, 1.5, 16), mat(0xffffff, { map: rope }), [0, 0.85, 0]);
+  add(post, new THREE.BoxGeometry(0.7, 0.08, 0.7), carpet, [0, 1.64, 0]);
+  const line = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0.3, 1.6, 0.3), new THREE.Vector3(0.3, 1.05, 0.3)]);
+  post.add(new THREE.Line(line, new THREE.LineBasicMaterial({ color: 0x555555 })));
+  add(post, new THREE.SphereGeometry(0.07, 12, 10), mat(0xf2a541), [0.3, 1.0, 0.3]);
+}
+
+// furniture footprints the cats and yarn bump into (catPass: cats may walk onto it)
+const obst = [
+  { x0: 1.85, x1: 4.95, z0: -6, z1: -1.45, h: 0.95 },  // bed
+  { x0: 0.8, x1: 1.6, z0: -6, z1: -5.15, h: 0.75 },    // nightstands
+  { x0: 5.2, x1: 6.0, z0: -6, z1: -5.15, h: 0.75 },
+  { x0: -5.75, x1: -3.85, z0: -6, z1: -5.45, h: 2.4 }, // bookshelf
+  { x0: -7, x1: -5.95, z0: -3.55, z1: -0.45, h: 3.3 }, // wardrobe
+  { x0: 6.08, x1: 7, z0: 1.35, z1: 3.65, h: 1.1 },     // desk
+  { x0: -6.65, x1: -5.75, z0: 4.35, z1: 5.25, h: 1.7 },// scratching post
+  { x0: -5.5, x1: -4.1, z0: 3.4, z1: 4.8, h: 0.3, catPass: true }, // cat bed
+];
+return {
+  group: scene, floor, bounds: { hx: HX, hz: HZ }, obst, walls,
+  nap: { x: CAT_BED.x, z: CAT_BED.z, y: 0.1, where: 'in the cat bed' },
+  napAlt: { x: 0, z: 1, y: 0, where: 'on the rug' },
+  start: { cats: [[0.8, 1.4, 0.4], [-1.6, 0.6, 1.2]], ball: [2, 2.8] },
+  cam: [6, 5.5, 9],
+  light: { bg: 0x3a3430, fog: null, hemi: [0xfff6e8, 0x8a7560, 0.62], amb: 0.12, sun: [0xfff1dc, 0.75, [-3, 11, -7]] },
+};
+}
+
+function buildBeach() {
+  const g = new THREE.Group();
+  const HX = 8.5, HZ = 5.5;
+  const sandTex = canvasTex(256, 256, (x, W, H) => {
+    x.fillStyle = '#f0d9a6'; x.fillRect(0, 0, W, H);
+    for (let i = 0; i < 1400; i++) {
+      x.fillStyle = Math.random() < 0.5 ? 'rgba(180,140,80,.35)' : 'rgba(255,250,235,.5)';
+      x.fillRect(Math.random() * W, Math.random() * H, 2, 2);
+    }
+  });
+  sandTex.wrapS = sandTex.wrapT = THREE.RepeatWrapping; sandTex.repeat.set(10, 10);
+  const floor = add(g, new THREE.PlaneGeometry(60, 40), mat(0xffffff, { map: sandTex, roughness: 1 }), [0, 0, 8], null, [-Math.PI / 2, 0, 0], false);
+  add(g, new THREE.PlaneGeometry(60, 1.6), mat(0xd6b67f, { roughness: 0.7 }), [0, 0.004, -HZ - 0.3], null, [-Math.PI / 2, 0, 0], false);
+
+  // sea with rolling swell
+  const seaGeo = new THREE.PlaneGeometry(80, 34, 80, 34);
+  const sea = add(g, seaGeo, mat(0x35aec4, { roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.92, flatShading: true }), [0, 0.02, -HZ - 17.6], null, [-Math.PI / 2, 0, 0], false);
+  const seaBase = seaGeo.attributes.position.array.slice();
+  const foam = [];
+  for (let i = 0; i < 9; i++) foam.push(add(g, new THREE.BoxGeometry(rand(2, 5), 0.03, 0.18), mat(0xffffff, { roughness: 0.6 }), [i * 6.5 - 26 + rand(-1, 1), 0.05, -HZ - 0.85], null, null, false));
+
+  // palms
+  function palm(x, z, lean) {
+    const p = new THREE.Group(); p.position.set(x, 0, z); p.rotation.y = rand(0, TAU); g.add(p);
+    let y = 0, off = 0;
+    for (let i = 0; i < 7; i++) {
+      add(p, new THREE.CylinderGeometry(0.15 - i * 0.01, 0.18 - i * 0.01, 0.62, 8), mat(i % 2 ? 0x9c7a52 : 0x8a6a45), [off, y + 0.31, 0], null, [0, 0, -lean * i * 0.05]);
+      y += 0.58; off += lean * i * 0.035;
+    }
+    const top = new THREE.Group(); top.position.set(off, y, 0); p.add(top);
+    for (let i = 0; i < 8; i++) {
+      const leaf = new THREE.Group(); leaf.rotation.set(0, i / 8 * TAU, 0); top.add(leaf);
+      add(leaf, new THREE.ConeGeometry(0.32, 2.4, 4), mat(i % 2 ? 0x3f9a4a : 0x4fae55, { flatShading: true }), [1.05, -0.25, 0], [1, 1, 0.25], [0, 0, -1.9]);
+    }
+    for (let i = 0; i < 3; i++) add(top, new THREE.SphereGeometry(0.13, 10, 8), mat(0x6b4a2b), [Math.cos(i * 2.1) * 0.2, -0.2, Math.sin(i * 2.1) * 0.2]);
+  }
+  palm(-6.6, 3.6, 1); palm(6.9, 4.2, -1); palm(7.2, -3.4, 0.8); palm(-7.4, -2.6, -0.6);
+
+  // umbrella + towel
+  const ux = -3, uz = -2.4;
+  add(g, new THREE.CylinderGeometry(0.04, 0.04, 2.5, 8), mat(0xf4f1ea), [ux, 1.25, uz], null, [0.12, 0, 0]);
+  const stripes = canvasTex(256, 32, (x, W, H) => { for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? '#ffffff' : '#e5534b'; x.fillRect(i * W / 8, 0, W / 8, H); } });
+  add(g, new THREE.ConeGeometry(1.6, 0.6, 16, 1, true), mat(0xffffff, { map: stripes, side: THREE.DoubleSide }), [ux, 2.45, uz + 0.15], null, [0.12, 0, 0]);
+  const towelTex = canvasTex(64, 128, (x, W, H) => { const c = ['#2f8fcf', '#ffffff', '#f2c94c', '#ffffff']; for (let i = 0; i < 8; i++) { x.fillStyle = c[i % 4]; x.fillRect(0, i * H / 8, W, H / 8); } });
+  add(g, new THREE.BoxGeometry(1.1, 0.02, 1.9), mat(0xffffff, { map: towelTex, roughness: 1 }), [ux + 0.3, 0.01, uz + 0.7], null, [0, 0.2, 0]);
+
+  // sandcastle
+  const castle = new THREE.Group(); castle.position.set(3.4, 0, -1.6); g.add(castle);
+  const wet = mat(0xdcbf86, { roughness: 1 });
+  add(castle, new THREE.BoxGeometry(1.1, 0.35, 1.1), wet, [0, 0.175, 0]);
+  for (const [x, z] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) {
+    add(castle, new THREE.CylinderGeometry(0.17, 0.2, 0.6, 12), wet, [x, 0.3, z]);
+    add(castle, new THREE.ConeGeometry(0.2, 0.25, 12), wet, [x, 0.72, z]);
+  }
+  add(castle, new THREE.CylinderGeometry(0.2, 0.25, 0.5, 12), wet, [0, 0.6, 0]);
+  add(castle, new THREE.BoxGeometry(0.01, 0.15, 0.12), mat(0xe5534b), [0, 1.02, 0.06]);
+  add(castle, new THREE.CylinderGeometry(0.008, 0.008, 0.25, 4), mat(0x555555), [0, 0.97, 0]);
+
+  // shells and starfish
+  for (let i = 0; i < 14; i++) {
+    const x = rand(-HX, HX), z = rand(-HZ, HZ + 3);
+    if (Math.hypot(x - 3.4, z + 1.6) < 1.2 || Math.hypot(x - ux, z - uz) < 1.5) continue;
+    if (i % 3) add(g, new THREE.SphereGeometry(0.07, 10, 6), mat(i % 2 ? 0xffe4d6 : 0xf6c9a8), [x, 0.015, z], [1, 0.35, 1.2], null, false);
+    else for (let a = 0; a < 5; a++) add(g, new THREE.ConeGeometry(0.035, 0.16, 6), mat(0xf28f5c), [x + Math.cos(a / 5 * TAU) * 0.07, 0.015, z + Math.sin(a / 5 * TAU) * 0.07], null, [Math.PI / 2, 0, -a / 5 * TAU + Math.PI / 2], false);
+  }
+  return {
+    group: g, floor, bounds: { hx: HX, hz: HZ }, walls: [],
+    obst: [
+      { x0: 2.75, x1: 4.05, z0: -2.25, z1: -0.95, h: 0.8 }, // sandcastle
+      { x0: ux - 0.15, x1: ux + 0.15, z0: uz - 0.15, z1: uz + 0.15, h: 2.5 }, // umbrella pole
+      { x0: -6.95, x1: -6.25, z0: 3.25, z1: 3.95, h: 4 },
+      { x0: 6.55, x1: 7.25, z0: 3.85, z1: 4.55, h: 4 },
+      { x0: 6.85, x1: 7.55, z0: -3.75, z1: -3.05, h: 4 },
+      { x0: -7.75, x1: -7.05, z0: -2.95, z1: -2.25, h: 4 },
+    ],
+    nap: { x: ux + 0.35, z: uz + 0.85, y: 0.02, where: 'on the beach towel' },
+    napAlt: { x: 0.5, z: 2.2, y: 0, where: 'in the warm sand' },
+    start: { cats: [[0.6, 1.2, 0.4], [-1.4, 0.4, 1.2]], ball: [1.8, 2.6] },
+    cam: [5, 3.8, 8],
+    light: { bg: 0x9bd8f0, fog: [0x9bd8f0, 30, 70], hemi: [0xffffff, 0xe8d3a0, 0.8], amb: 0, sun: [0xfff3d6, 1.0, [8, 12, 4]] },
+    update(dt, t) {
+      const pos = seaGeo.attributes.position.array;
+      for (let i = 0; i < pos.length; i += 3) {
+        const x = seaBase[i], y = seaBase[i + 1];
+        pos[i + 2] = Math.sin(x * 0.35 + t * 1.3) * 0.12 + Math.cos(y * 0.5 + t * 0.9) * 0.1;
+      }
+      seaGeo.attributes.position.needsUpdate = true;
+      seaGeo.computeVertexNormals();
+      foam.forEach((f, i) => { f.position.z = -HZ - 0.85 + Math.sin(t * 0.8 + i) * 0.35; f.scale.x = 1 + 0.25 * Math.sin(t * 1.1 + i * 2); });
+    },
+  };
+}
+
+function buildSnow() {
+  const g = new THREE.Group();
+  const R = 9.3;
+  add(g, new THREE.CircleGeometry(60, 48), mat(0xe4ebf4), [0, -0.01, 0], null, [-Math.PI / 2, 0, 0], false);
+  const floor = add(g, new THREE.CircleGeometry(R, 72), mat(0xf4f7fb, { roughness: 1 }), [0, 0, 0], null, [-Math.PI / 2, 0, 0], false);
+  fence(g, R);
+  for (let i = 0; i < 70; i++) { // fence caps of snow
+    const a = i / 72 * TAU;
+    add(g, new THREE.SphereGeometry(0.08, 8, 6), mat(0xffffff), [Math.cos(a) * R, 0.64, Math.sin(a) * R], [1, 0.5, 1], null, false);
+  }
+  // pines
+  for (let i = 0; i < 18; i++) {
+    const a = i / 18 * TAU + rand(-0.12, 0.12), r = rand(12, 18), s = rand(0.8, 1.5);
+    const t = new THREE.Group(); t.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); g.add(t);
+    add(t, new THREE.CylinderGeometry(0.15 * s, 0.2 * s, 0.8 * s, 8), mat(0x6b4a33), [0, 0.4 * s, 0]);
+    for (let k = 0; k < 3; k++) {
+      add(t, new THREE.ConeGeometry((1.3 - k * 0.32) * s, 1.4 * s, 9), mat(0x2f6b4f, { flatShading: true }), [0, (1.2 + k * 0.8) * s, 0]);
+      add(t, new THREE.ConeGeometry((0.9 - k * 0.25) * s, 0.5 * s, 9), mat(0xffffff, { flatShading: true }), [0, (1.65 + k * 0.8) * s, 0]);
+    }
+  }
+  for (let i = 0; i < 24; i++) {
+    const a = rand(0, TAU), r = rand(10, 11.8);
+    add(g, new THREE.SphereGeometry(rand(0.4, 0.8), 12, 8), mat(0xffffff), [Math.cos(a) * r, 0, Math.sin(a) * r], [1, 0.6, 1]);
+  }
+  // snowman
+  const sm = new THREE.Group(); sm.position.set(3.2, 0, -3.2); sm.rotation.y = -0.6; g.add(sm);
+  const snow = mat(0xffffff, { roughness: 1 }), coal = mat(0x1d1d22, { roughness: 0.6 });
+  add(sm, new THREE.SphereGeometry(0.65, 20, 16), snow, [0, 0.55, 0]);
+  add(sm, new THREE.SphereGeometry(0.48, 20, 16), snow, [0, 1.35, 0]);
+  add(sm, new THREE.SphereGeometry(0.34, 20, 16), snow, [0, 1.98, 0]);
+  add(sm, new THREE.ConeGeometry(0.06, 0.32, 10), mat(0xf28c28), [0, 1.98, 0.45], null, [Math.PI / 2, 0, 0]);
+  for (const s of [-1, 1]) add(sm, new THREE.SphereGeometry(0.04, 8, 6), coal, [s * 0.12, 2.08, 0.3]);
+  for (let i = 0; i < 3; i++) add(sm, new THREE.SphereGeometry(0.045, 8, 6), coal, [0, 1.2 + i * 0.16, 0.47 - Math.abs(i - 1) * 0.02]);
+  add(sm, new THREE.TorusGeometry(0.3, 0.07, 8, 20), mat(0xc8553d), [0, 1.72, 0], null, [Math.PI / 2, 0, 0]);
+  add(sm, new THREE.BoxGeometry(0.14, 0.4, 0.04), mat(0xc8553d), [0.18, 1.5, 0.3], null, [0, 0, 0.2]);
+  add(sm, new THREE.CylinderGeometry(0.22, 0.22, 0.04, 16), coal, [0, 2.27, 0]);
+  add(sm, new THREE.CylinderGeometry(0.15, 0.15, 0.3, 16), coal, [0, 2.42, 0]);
+  for (const s of [-1, 1]) add(sm, new THREE.CylinderGeometry(0.02, 0.025, 0.8, 5), mat(0x6b4a33), [s * 0.65, 1.5, 0], null, [0, 0, s * 1.0]);
+  // lamp post and a plaid blanket to nap on
+  const lamp = new THREE.Group(); lamp.position.set(-4.4, 0, 2.2); g.add(lamp);
+  add(lamp, new THREE.CylinderGeometry(0.06, 0.09, 2.6, 10), mat(0x2b2b30, { metalness: 0.5, roughness: 0.4 }), [0, 1.3, 0]);
+  add(lamp, new THREE.BoxGeometry(0.3, 0.38, 0.3), mat(0xffe3a6, { emissive: 0xffc46b, emissiveIntensity: 0.9 }), [0, 2.75, 0]);
+  add(lamp, new THREE.ConeGeometry(0.26, 0.18, 4), mat(0x2b2b30), [0, 3.03, 0], null, [0, Math.PI / 4, 0]);
+  const glow = new THREE.PointLight(0xffc46b, 0.9, 9, 2); glow.position.set(0, 2.6, 0); lamp.add(glow);
+  const plaid = canvasTex(128, 128, (x, W) => {
+    x.fillStyle = '#b8323a'; x.fillRect(0, 0, W, W);
+    x.fillStyle = 'rgba(30,40,60,.55)'; for (let i = 0; i < W; i += 32) { x.fillRect(i, 0, 12, W); x.fillRect(0, i, W, 12); }
+    x.fillStyle = 'rgba(255,220,120,.6)'; for (let i = 18; i < W; i += 32) { x.fillRect(i, 0, 2, W); x.fillRect(0, i, W, 2); }
+  });
+  add(g, new THREE.BoxGeometry(1.6, 0.03, 1.3), mat(0xffffff, { map: plaid, roughness: 1 }), [-3.4, 0.015, 2.9], null, [0, 0.3, 0]);
+
+  // falling snow
+  const N = 1600, flakes = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) { flakes[i * 3] = rand(-16, 16); flakes[i * 3 + 1] = rand(0, 12); flakes[i * 3 + 2] = rand(-16, 16); }
+  const flakeGeo = new THREE.BufferGeometry(); flakeGeo.setAttribute('position', new THREE.BufferAttribute(flakes, 3));
+  g.add(new THREE.Points(flakeGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.09, transparent: true, opacity: 0.9 })));
+  return {
+    group: g, floor, bounds: { r: R }, walls: [],
+    obst: [
+      { x0: 2.5, x1: 3.9, z0: -3.9, z1: -2.5, h: 2.6 }, // snowman
+      { x0: -4.6, x1: -4.2, z0: 2.0, z1: 2.4, h: 3 },   // lamp post
+    ],
+    nap: { x: -3.4, z: 2.9, y: 0.03, where: 'on the plaid blanket' },
+    napAlt: { x: 0.4, z: 1.6, y: 0, where: 'curled up in the snow' },
+    start: { cats: [[0.8, 0.4, 0.4], [-1.6, -1.2, 1.2]], ball: [2, 1.8] },
+    cam: [5, 3.8, 7.5],
+    light: { bg: 0x9fb0c8, fog: [0x9fb0c8, 16, 42], hemi: [0xdfe8ff, 0x8a96aa, 0.68], amb: 0.05, sun: [0xdde6ff, 0.6, [5, 10, 6]] },
+    update(dt, t) {
+      const p = flakeGeo.attributes.position.array;
+      for (let i = 0; i < N; i++) {
+        p[i * 3 + 1] -= dt * (0.7 + (i % 5) * 0.12);
+        p[i * 3] += Math.sin(t + i) * dt * 0.25;
+        if (p[i * 3 + 1] < 0) p[i * 3 + 1] = 12;
+      }
+      flakeGeo.attributes.position.needsUpdate = true;
+    },
+  };
+}
+
+const PLACES = { yard: buildYard(), bedroom: buildBedroom(), beach: buildBeach(), snow: buildSnow() };
+for (const k in PLACES) { PLACES[k].group.visible = false; scene.add(PLACES[k].group); }
+let env = PLACES.bedroom;
+
+const inside = (x, z, m = 0) => env.bounds.r ? Math.hypot(x, z) < env.bounds.r - m : Math.abs(x) < env.bounds.hx - m && Math.abs(z) < env.bounds.hz - m;
+function clampIn(p, m) {
+  const b = env.bounds;
+  if (b.r) { const r = Math.hypot(p.x, p.z), lim = b.r - m; if (r > lim) { p.x *= lim / r; p.z *= lim / r; } }
+  else { p.x = clamp(p.x, -b.hx + m, b.hx - m); p.z = clamp(p.z, -b.hz + m, b.hz - m); }
+}
+const inObstacle = (x, z, m = 0) => env.obst.some(o => x > o.x0 - m && x < o.x1 + m && z > o.z0 - m && z < o.z1 + m);
+// pushes a point out of the furniture; returns the push normal of the last hit, if any
+function pushOut(p, r, skip) {
+  let n = null;
+  for (const o of env.obst) {
+    if (skip && skip(o)) continue;
+    const cx = clamp(p.x, o.x0, o.x1), cz = clamp(p.z, o.z0, o.z1);
+    const dx = p.x - cx, dz = p.z - cz, d = Math.hypot(dx, dz);
+    if (d >= r) continue;
+    if (d > 1e-5) { p.x = cx + dx / d * r; p.z = cz + dz / d * r; n = [dx / d, dz / d]; }
+    else {
+      const e = [[p.x - o.x0, -1, 0], [o.x1 - p.x, 1, 0], [p.z - o.z0, 0, -1], [o.z1 - p.z, 0, 1]].sort((a, b) => a[0] - b[0])[0];
+      p.x += e[1] * (e[0] + r); p.z += e[2] * (e[0] + r); n = [e[1], e[2]];
+    }
+  }
+  return n;
+}
+
+// ---------- coats ----------
+const COATS = [
+  { name: 'Marmalade', base: '#e48a3a', belly: '#fbe9d0', stripe: 'rgba(160,80,25,.85)', stripes: 8, stripeW: 6,
+    baseHex: 0xe48a3a, stripeHex: 0xa9581c, bellyHex: 0xfbe9d0, eye: 0xc5dd45, nose: 0xf29bb0, frontLegBelly: true, scale: 1 },
+  { name: 'Smokey', base: '#8d9096', belly: '#e3e4e6', stripe: 'rgba(24,24,28,.92)', stripes: 11, stripeW: 7,
+    baseHex: 0x8d9096, stripeHex: 0x26262b, bellyHex: 0xe3e4e6, eye: 0xe7b13c, nose: 0x3a3236, frontLegBelly: false, scale: 0.93 },
+];
+
+function furTexture(p) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = p.base; x.fillRect(0, 0, 512, 256);
+  // belly sits at u = 0.25 on the rotated sphere
+  const g = x.createLinearGradient(0, 0, 512, 0);
+  const [r, gg, b] = [1, 3, 5].map(i => parseInt(p.belly.slice(i, i + 2), 16));
+  g.addColorStop(0.08, `rgba(${r},${gg},${b},0)`);
+  g.addColorStop(0.2, `rgba(${r},${gg},${b},1)`);
+  g.addColorStop(0.3, `rgba(${r},${gg},${b},1)`);
+  g.addColorStop(0.42, `rgba(${r},${gg},${b},0)`);
+  x.fillStyle = g; x.fillRect(0, 0, 512, 256);
+  // tabby stripes = rings around the body, kept off the belly
+  x.strokeStyle = p.stripe; x.lineCap = 'round';
+  const gap = 150 / p.stripes;
+  for (let i = 0; i < p.stripes; i++) {
+    const y = 55 + i * gap;
+    x.lineWidth = p.stripeW + Math.random() * 4;
+    x.beginPath();
+    for (let u = 230; u <= 560; u += 8) {
+      const yy = y + Math.sin(u * 0.05 + i) * 4;
+      u === 230 ? x.moveTo(u, yy) : x.lineTo(u, yy);
+    }
+    x.stroke();
+  }
+  // dark line down the spine (u = 0.75 is the back)
+  x.fillStyle = p.stripe; x.globalAlpha = 0.5; x.fillRect(372, 40, 12, 176); x.globalAlpha = 1;
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping;
+  return t;
+}
+function legTexture(p) {
+  const c = document.createElement('canvas'); c.width = 64; c.height = 128;
+  const x = c.getContext('2d');
+  x.fillStyle = p.base; x.fillRect(0, 0, 64, 128);
+  x.fillStyle = p.stripe;
+  for (let y = 18; y < 128; y += 30) x.fillRect(0, y, 64, 9);
+  return new THREE.CanvasTexture(c);
+}
+function yarnTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#d9476e'; x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 90; i++) {
+    x.strokeStyle = i % 3 ? 'rgba(255,170,195,.55)' : 'rgba(140,20,55,.5)';
+    x.lineWidth = 2 + Math.random() * 2;
+    x.beginPath();
+    const y0 = Math.random() * 256, k = rand(-0.6, 0.6);
+    x.moveTo(0, y0); x.bezierCurveTo(80, y0 + k * 80, 170, y0 - k * 80, 256, y0 + rand(-20, 20));
+    x.stroke();
+  }
+  return new THREE.CanvasTexture(c);
+}
+
+// ---------- pose: targets (T) are rebuilt each frame, current (C) eases toward them ----------
+function basePose() {
+  return {
+    y: 0.62, pitch: 0, roll: 0, headPitch: 0, headYaw: 0, headRoll: 0,
+    tailBase: -1.0, tailCurl: 0.12, tailSide: 0, wag: 0.18, wagSpeed: 2.2, ear: 0, eyes: 1,
+    hip: [0, 0, -0.25, -0.25], knee: [0, 0, 0.45, 0.45], side: [0, 0, 0, 0],
+  };
+}
+const RATES = { y: 9, pitch: 8, roll: 12, headPitch: 6, headYaw: 6, headRoll: 6, tailBase: 5, tailCurl: 5, tailSide: 5, wag: 4, wagSpeed: 4, ear: 8, eyes: 30 };
+const LEG_RATE = 22;
+
+// ---------- cat factory ----------
+const black = mat(0x141414, { roughness: 0.2 });
+const white = mat(0xffffff, { roughness: 0.2, emissive: 0xffffff, emissiveIntensity: 0.4 });
+
+function makeCat(p, idx) {
+  const furMat = mat(0xffffff, { map: furTexture(p) });
+  const coat = mat(p.baseHex);
+  const legMat = mat(0xffffff, { map: legTexture(p) });
+  const stripe = mat(p.stripeHex);
+  const belly = mat(p.bellyHex, { roughness: 0.95 });
+  const innerEar = mat(0xf29bb0, { roughness: 0.6 });
+  const nose = mat(p.nose, { roughness: 0.6 });
+  const eyeMat = mat(p.eye, { roughness: 0.25 });
+
+  const root = new THREE.Group(); root.scale.setScalar(p.scale); scene.add(root);
+  const body = new THREE.Group(); body.position.y = 0.62; root.add(body);
+
+  const torsoGeo = new THREE.SphereGeometry(0.5, 40, 28); torsoGeo.rotateX(Math.PI / 2);
+  add(body, torsoGeo, furMat, [0, 0, 0], [0.62, 0.58, 1.0]);
+  add(body, new THREE.SphereGeometry(0.19, 24, 16), belly, [0, -0.07, 0.36], [1, 1.1, 0.9]);
+  for (const s of [-1, 1]) add(body, new THREE.SphereGeometry(0.16, 20, 14), legMat, [s * 0.15, -0.04, -0.28], [0.9, 1.05, 1.2]);
+
+  const neck = new THREE.Group(); neck.position.set(0, 0.16, 0.4); neck.rotation.order = 'YXZ'; body.add(neck);
+  const head = new THREE.Group(); head.position.set(0, 0.12, 0.13); neck.add(head);
+  add(head, new THREE.SphereGeometry(0.27, 32, 24), coat, [0, 0, 0], [1.05, 0.92, 0.95]);
+  // forehead "M" and cheek stripes
+  for (const [px, rz] of [[-0.06, 0.25], [0, 0], [0.06, -0.25]])
+    add(head, new THREE.SphereGeometry(0.1, 12, 8), stripe, [px, 0.19, 0.12], [0.14, 0.08, 0.6], [-0.7, 0, rz]);
+  for (const s of [-1, 1]) {
+    add(head, new THREE.SphereGeometry(0.085, 16, 12), belly, [s * 0.055, -0.08, 0.2], [1, 0.8, 0.9]);
+    add(head, new THREE.SphereGeometry(0.11, 16, 12), coat, [s * 0.15, -0.06, 0.08], [1, 0.85, 0.9]);
+    for (const dy of [0, -0.045])
+      add(head, new THREE.SphereGeometry(0.1, 10, 8), stripe, [s * 0.235, dy, 0.07], [0.5, 0.07, 0.12], [0, s * 0.5, s * -0.2], false);
+  }
+  add(head, new THREE.SphereGeometry(0.06, 14, 10), belly, [0, -0.14, 0.16]);
+  add(head, new THREE.SphereGeometry(0.032, 12, 8), nose, [0, -0.035, 0.262], [1.3, 0.8, 0.8]);
+
+  const eyes = [];
+  for (const s of [-1, 1]) {
+    const e = new THREE.Group(); e.position.set(s * 0.1, 0.03, 0.195); e.rotation.y = s * 0.28; head.add(e);
+    add(e, new THREE.SphereGeometry(0.062, 18, 14), eyeMat, [0, 0, 0], null, null, false);
+    add(e, new THREE.SphereGeometry(0.063, 14, 10), black, [0, 0, 0.012], [0.32, 0.9, 0.95], null, false);
+    add(e, new THREE.SphereGeometry(0.014, 8, 6), white, [0.018, 0.024, 0.055], null, null, false);
+    eyes.push(e);
+  }
+  const ears = [];
+  for (const s of [-1, 1]) {
+    const g = new THREE.Group(); g.position.set(s * 0.14, 0.18, -0.02); g.rotation.set(-0.15, 0, -s * 0.35); head.add(g);
+    add(g, new THREE.ConeGeometry(0.1, 0.22, 16), coat, [0, 0.09, 0], [1, 1, 0.45]);
+    add(g, new THREE.ConeGeometry(0.065, 0.15, 16), innerEar, [0, 0.07, 0.024], [1, 1, 0.3], null, false);
+    ears.push({ g, s });
+  }
+  const wMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 });
+  for (const s of [-1, 1]) for (let k = 0; k < 3; k++) {
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(s * 0.09, -0.08 + k * 0.022, 0.23),
+      new THREE.Vector3(s * 0.22, -0.07 + (k - 1) * 0.03, 0.24),
+      new THREE.Vector3(s * 0.36, -0.08 + (k - 1) * 0.07, 0.19),
+    ]);
+    head.add(new THREE.Line(geo, wMat));
+  }
+
+  // legs: 0 front-left, 1 front-right, 2 rear-left, 3 rear-right (cat faces +z, its left is +x)
+  const legs = [];
+  for (const [x, z, front] of [[0.15, 0.3, true], [-0.15, 0.3, true], [0.15, -0.3, false], [-0.15, -0.3, false]]) {
+    const hip = new THREE.Group(); hip.position.set(x, -0.105, z); body.add(hip);
+    const uR = front ? 0.065 : 0.085;
+    const up = new THREE.CylinderGeometry(uR, 0.055, 0.25, 14); up.translate(0, -0.125, 0);
+    add(hip, new THREE.SphereGeometry(uR, 14, 10), coat);
+    add(hip, up, legMat);
+    const knee = new THREE.Group(); knee.position.y = -0.25; hip.add(knee);
+    add(knee, new THREE.SphereGeometry(0.055, 12, 8), coat);
+    const low = new THREE.CylinderGeometry(0.052, 0.045, 0.2, 12); low.translate(0, -0.1, 0);
+    add(knee, low, front && p.frontLegBelly ? belly : legMat);
+    const ankle = new THREE.Group(); ankle.position.y = -0.2; knee.add(ankle);
+    add(ankle, new THREE.SphereGeometry(0.068, 14, 10), belly, [0, 0, 0.025], [0.95, 0.6, 1.25]);
+    legs.push({ hip, knee, ankle, front });
+  }
+
+  // tail: chain of segments, each nested in the previous
+  const tailBase = new THREE.Group(); tailBase.position.set(0, 0.1, -0.46); body.add(tailBase);
+  const tail = [];
+  let parent = tailBase;
+  for (let i = 0; i < SEG; i++) {
+    const g = new THREE.Group(); if (i) g.position.y = segL; parent.add(g);
+    const r0 = 0.052 - i * 0.002, r1 = r0 - 0.002;
+    const geo = new THREE.CylinderGeometry(r1, r0, segL + 0.012, 12); geo.translate(0, segL / 2, 0);
+    const m = i === SEG - 1 || i % 3 === 2 ? stripe : coat;
+    add(g, new THREE.SphereGeometry(r0, 10, 8), m);
+    add(g, geo, m);
+    tail.push(g); parent = g;
+  }
+  add(parent, new THREE.SphereGeometry(0.03, 10, 8), stripe, [0, segL, 0]);
+
+  return {
+    idx, name: p.name, root, body, neck, eyes, ears, legs, tailBase, tail,
+    statusEl: document.getElementById('status-' + idx),
+    T: basePose(), C: basePose(),
+    heading: 0, speedSm: 0, gp: 0, wagPhase: 0,
+    blinkT: rand(1, 4), blinking: 0, earTwitch: 0, earTwitchSide: 1,
+    state: null, last: null, friend: null,
+  };
+}
+const SEG = 11, segL = 0.075;
+
+const cats = COATS.map(makeCat);
+cats[0].friend = cats[1]; cats[1].friend = cats[0];
+cats[0].root.position.set(0.8, 0, 1.4); cats[0].heading = 0.4;
+cats[1].root.position.set(-1.6, 0, 0.6); cats[1].heading = 1.2;
+
+// ---------- yarn ball ----------
+const BALL_R = 0.17;
+const ball = { pos: new THREE.Vector3(2, BALL_R, 2.8), vel: new THREE.Vector3(), stuck: 0 };
+const ballMesh = new THREE.Group(); scene.add(ballMesh);
+add(ballMesh, new THREE.SphereGeometry(BALL_R, 24, 18), mat(0xffffff, { map: yarnTexture() }));
+for (let i = 0; i < 6; i++) add(ballMesh, new THREE.TorusGeometry(BALL_R * 0.99, 0.012, 6, 40), mat(i % 2 ? 0xf27a9a : 0xbf3560), null, null, [rand(0, TAU), rand(0, TAU), 0]);
+
+function kickBall(angle, speed, up) {
+  ball.vel.set(Math.sin(angle) * speed, up, Math.cos(angle) * speed);
+}
+const _axis = new THREE.Vector3();
+function updateBall(dt) {
+  const p = ball.pos, v = ball.vel;
+  v.y -= 9.8 * dt;
+  p.addScaledVector(v, dt);
+  // walls
+  const b = env.bounds;
+  if (b.r) {
+    const r = Math.hypot(p.x, p.z), lim = b.r - 0.5;
+    if (r > lim) {
+      const nx = p.x / r, nz = p.z / r;
+      p.x = nx * lim; p.z = nz * lim;
+      const vn = v.x * nx + v.z * nz;
+      if (vn > 0) { v.x -= 1.7 * vn * nx; v.z -= 1.7 * vn * nz; }
+    }
+  } else {
+    for (const [ax, lim] of [['x', b.hx - BALL_R], ['z', b.hz - BALL_R]]) {
+      if (Math.abs(p[ax]) > lim) { const s = Math.sign(p[ax]); p[ax] = s * lim; if (v[ax] * s > 0) v[ax] *= -0.7; }
+    }
+  }
+  // furniture: bounce off the sides, or rest on top
+  let ground = 0;
+  for (const o of env.obst) {
+    const cx = clamp(p.x, o.x0, o.x1), cz = clamp(p.z, o.z0, o.z1);
+    if (Math.hypot(p.x - cx, p.z - cz) >= BALL_R) continue;
+    if (p.y - BALL_R >= o.h - 0.06) { ground = Math.max(ground, o.h); continue; }
+    const n = pushOut(p, BALL_R, q => q !== o);
+    if (n) { const vn = v.x * n[0] + v.z * n[1]; if (vn < 0) { v.x -= 1.7 * vn * n[0]; v.z -= 1.7 * vn * n[1]; } }
+  }
+  if (p.y < ground + BALL_R) {
+    p.y = ground + BALL_R;
+    v.y = Math.abs(v.y) > 0.6 ? -v.y * 0.45 : 0;
+  }
+  const onSurface = p.y <= ground + BALL_R + 0.001;
+  const fr = Math.exp(-(onSurface ? 1.1 : 0.1) * dt);
+  v.x *= fr; v.z *= fr;
+  // yarn that comes to rest up on furniture rolls back off toward the middle of the room
+  if (ground > 0 && onSurface && Math.hypot(v.x, v.z) < 0.4) {
+    ball.stuck = (ball.stuck || 0) + dt;
+    if (ball.stuck > 1.2) { const l = Math.hypot(p.x, p.z - 1) || 1; v.x = -p.x / l * 2.2; v.z = -(p.z - 1) / l * 2.2; ball.stuck = 0; }
+  } else ball.stuck = 0;
+  const sp = Math.hypot(v.x, v.z);
+  if (sp > 0.001) {
+    _axis.set(ball.vel.z, 0, -ball.vel.x).normalize();
+    ballMesh.rotateOnWorldAxis(_axis, sp * dt / BALL_R);
+  }
+  ballMesh.position.copy(ball.pos);
+}
+
+// ---------- movement helpers ----------
+const angleTo = (k, x, z) => Math.atan2(x - k.root.position.x, z - k.root.position.z);
+const distTo = (k, x, z) => Math.hypot(x - k.root.position.x, z - k.root.position.z);
+const distBall = k => distTo(k, ball.pos.x, ball.pos.z);
+const ballAngle = k => angleTo(k, ball.pos.x, ball.pos.z);
+
+function stepForward(k, dt) {
+  k.root.position.x += Math.sin(k.heading) * k.speedSm * dt;
+  k.root.position.z += Math.cos(k.heading) * k.speedSm * dt;
+}
+function coast(k, dt) { k.speedSm = damp(k.speedSm, 0, 8, dt); stepForward(k, dt); }
+function turnToward(k, angle, rate, dt) { k.heading += clamp(angDiff(k.heading, angle), -rate * dt, rate * dt); }
+
+function moveToward(k, tx, tz, maxSpeed, dt, turn = 5) {
+  const T = k.T;
+  const dist = distTo(k, tx, tz);
+  const da = angDiff(k.heading, angleTo(k, tx, tz));
+  k.heading += clamp(da, -turn * dt, turn * dt);
+  const sp = maxSpeed * Math.max(0, Math.cos(da)) * Math.min(1, dist / 0.8 + 0.25);
+  k.speedSm = damp(k.speedSm, sp, 6, dt);
+  stepForward(k, dt);
+  T.roll += clamp(-da * 0.3, -0.22, 0.22) * Math.min(1, k.speedSm / 3);
+  T.headYaw += clamp(da * 0.5, -0.6, 0.6);
+  return dist;
+}
+
+function locoPose(k, speed, dt) {
+  if (speed < 0.05) return;
+  const T = k.T;
+  const run = speed > 2.2;
+  const freq = run ? 2.4 + speed * 0.12 : 0.9 + speed * 0.9;
+  k.gp += dt * freq * TAU;
+  const gp = k.gp;
+  const offs = run ? [0, 0.5, Math.PI, Math.PI + 0.5] : [0, Math.PI, Math.PI * 1.5, Math.PI * 0.5];
+  const amp = run ? 0.85 : 0.3 + speed * 0.14;
+  const kAmp = run ? 1.1 : 0.7;
+  for (let i = 0; i < 4; i++) {
+    const ph = gp + offs[i];
+    T.hip[i] += -amp * Math.sin(ph);
+    T.knee[i] += kAmp * Math.max(0, Math.cos(ph));
+  }
+  if (run) {
+    T.y += 0.04 + 0.05 * Math.sin(gp);
+    T.pitch += 0.13 * Math.sin(gp + 0.8);
+    T.headPitch -= 0.1 * Math.sin(gp + 0.8);
+    T.tailBase = -1.35; T.tailCurl = 0.04; T.wag = 0.08; T.ear = 0.35;
+  } else {
+    T.y += 0.015 * Math.abs(Math.sin(gp));
+  }
+}
+
+function randomPoint() {
+  for (let i = 0; i < 40; i++) {
+    const ex = env.bounds.r || env.bounds.hx, ez = env.bounds.r || env.bounds.hz;
+    const x = rand(-ex, ex), z = rand(-ez, ez);
+    if (inside(x, z, 1.2) && !inObstacle(x, z, 0.7)) return { x, z };
+  }
+  return { x: 0, z: 1 };
+}
+
+// ---------- behaviours ----------
+let auto = true;
+const INTERRUPTIBLE = ['idle', 'chase', 'zoom', 'stretch', 'tailChase'];
+
+const S = {
+  idle: {
+    label: 'Watching the yarn',
+    enter(k, d) { d.dur = auto ? rand(1.4, 3) : Infinity; },
+    update(k, d, dt) {
+      const T = k.T;
+      coast(k, dt);
+      const look = clamp(angDiff(k.heading, ballAngle(k)), -1.1, 1.1);
+      T.headYaw = look * 0.9 + 0.15 * Math.sin(d.t * 0.7 + k.idx);
+      T.headPitch = -0.08 + 0.06 * Math.sin(d.t * 0.5);
+      T.headRoll = 0.12 * Math.sin(d.t * 0.4 + k.idx * 2);
+      T.y += 0.006 * Math.sin(d.t * 3);
+      T.wag = 0.3; T.wagSpeed = 1.6; T.tailCurl = 0.2;
+      if (Math.abs(look) > 1.0) turnToward(k, ballAngle(k), 1.5, dt);
+      if (d.t > d.dur) next(k);
+    },
+  },
+  chase: {
+    label: 'Chasing the yarn',
+    enter(k, d) { d.dur = auto ? rand(5, 8) : 12; },
+    update(k, d, dt) {
+      const T = k.T;
+      const db = distBall(k);
+      moveToward(k, ball.pos.x, ball.pos.z, Math.min(3.9, 0.8 + db * 1.4), dt);
+      locoPose(k, k.speedSm, dt);
+      T.headPitch += 0.15; T.ear -= 0.1;
+      if (db < 0.72 && ball.pos.y < 0.35) return setState(k, 'bat');
+      if (auto && d.t > 1.5 && db > 2 && db < 4 && Math.random() < dt * 0.5) return setState(k, 'pounce');
+      if (d.t > d.dur) next(k);
+    },
+  },
+  bat: {
+    label: 'Batting the yarn',
+    enter(k, d) { d.hit = false; d.paw = Math.random() < 0.5 ? 0 : 1; d.dur = 0.75; },
+    update(k, d, dt) {
+      const T = k.T;
+      coast(k, dt);
+      turnToward(k, ballAngle(k), 4, dt);
+      const s = d.t / d.dur, env = Math.sin(Math.min(1, s) * Math.PI);
+      const i = d.paw, sg = i === 0 ? 1 : -1;
+      T.hip[i] = -1.35 * env; T.knee[i] = 0.6 * env;
+      T.side[i] = sg * (0.55 - 1.1 * s) * env;
+      T.hip[1 - i] = 0.15 * env;
+      T.pitch = -0.14 * env; T.y -= 0.03 * env;
+      T.headPitch = 0.35; T.ear = -0.15;
+      T.tailBase = -0.9; T.wag = 0.35; T.wagSpeed = 6;
+      if (!d.hit && s > 0.45) {
+        d.hit = true;
+        if (distBall(k) < 1.1) kickBall(k.heading + rand(-0.8, 0.8), rand(3, 5.5), rand(0.6, 2.4));
+      }
+      if (s >= 1) next(k);
+    },
+  },
+  pounce: {
+    label: 'Getting ready to pounce',
+    enter(k, d) { d.phase = 0; },
+    update(k, d, dt) {
+      const T = k.T, pos = k.root.position;
+      if (d.phase === 0) { // crouch + butt wiggle
+        coast(k, dt);
+        turnToward(k, ballAngle(k), 3, dt);
+        const e = ease(d.t / 0.35);
+        T.y = 0.62 - 0.14 * e; T.pitch = 0.08 * e;
+        T.hip[0] = T.hip[1] = 0.7 * e; T.knee[0] = T.knee[1] = -1.3 * e;
+        T.hip[2] = T.hip[3] = -0.25 - 0.65 * e; T.knee[2] = T.knee[3] = 0.45 + 1.1 * e;
+        T.headPitch = -0.05; T.ear = -0.25; T.tailBase = -1.5; T.tailCurl = 0.25; T.wag = 0.15; T.wagSpeed = 9;
+        if (d.t > 0.6) T.roll = 0.09 * Math.sin(d.t * 26);
+        if (d.t > 1.2) {
+          d.phase = 1; d.t = 0;
+          const a = ballAngle(k);
+          const dist = clamp(distBall(k) - 0.3, 0.6, 3.4);
+          d.sx = pos.x; d.sz = pos.z;
+          d.ex = d.sx + Math.sin(a) * dist; d.ez = d.sz + Math.cos(a) * dist;
+          d.h = 0.45 + dist * 0.12; d.jt = 0.45 + dist * 0.06;
+          k.statusEl.textContent = 'Pounce!';
+        }
+      } else if (d.phase === 1) { // leap
+        const s = Math.min(1, d.t / d.jt);
+        pos.x = d.sx + (d.ex - d.sx) * s;
+        pos.z = d.sz + (d.ez - d.sz) * s;
+        pos.y = 4 * d.h * s * (1 - s);
+        T.pitch = -0.55 * (1 - 2 * s);
+        T.hip[0] = T.hip[1] = -1.25; T.knee[0] = T.knee[1] = 0.15;
+        T.hip[2] = T.hip[3] = 1.0; T.knee[2] = T.knee[3] = 0.25;
+        T.headPitch = 0.3 * s; T.tailBase = -1.55; T.tailCurl = -0.05; T.ear = 0.3;
+        if (s >= 1) { pos.y = 0; d.phase = 2; d.t = 0; }
+      } else { // land
+        const e = Math.sin(Math.min(1, d.t / 0.45) * Math.PI);
+        T.y = 0.62 - 0.12 * e; T.headPitch = 0.35;
+        T.hip[0] = T.hip[1] = -0.5 * e; T.knee[0] = T.knee[1] = 0.4 * e;
+        if (!d.hit && distBall(k) < 1.0) {
+          d.hit = true;
+          k.statusEl.textContent = 'Got it!';
+          kickBall(k.heading + rand(-0.5, 0.5), rand(2, 4), rand(1.5, 3));
+        }
+        if (d.t > 0.6) next(k);
+      }
+    },
+  },
+  roll: {
+    label: 'Rolling in the grass',
+    enter(k, d) {
+      const rx = Math.cos(k.heading), rz = -Math.sin(k.heading), pos = k.root.position;
+      // positive roll moves the cat toward its local -x, so pick the sign that heads inward
+      d.dir = (rx * -pos.x + rz * -pos.z) > 0 ? -1 : 1;
+      d.angle = 0; d.rx = rx; d.rz = rz;
+    },
+    update(k, d, dt) {
+      const T = k.T, pos = k.root.position;
+      coast(k, dt);
+      const t = d.t;
+      let target;
+      if (t < 0.6) target = 0;
+      else if (t < 2.4) target = 3 * Math.PI * ease((t - 0.6) / 1.8);
+      else if (t < 3.8) target = 3 * Math.PI;
+      else if (t < 4.4) target = 3 * Math.PI + Math.PI * ease((t - 3.8) / 0.6);
+      else target = 4 * Math.PI;
+      const dA = target - d.angle; d.angle = target;
+      pos.x += -d.dir * dA * 0.3 * d.rx;
+      pos.z += -d.dir * dA * 0.3 * d.rz;
+      T.roll = d.dir * target;
+      const down = t < 4.4 ? ease(t / 0.5) : 1 - ease((t - 4.4) / 0.5);
+      T.y = 0.62 - 0.32 * down;
+      const onBack = t >= 2.4 && t < 3.8;
+      for (let i = 0; i < 4; i++) {
+        const f = k.legs[i].front;
+        let h = f ? -0.6 : -1.0, kn = f ? 1.6 : 1.8;
+        if (onBack) {
+          h = (f ? -0.5 : -0.7) + 0.45 * Math.sin(t * (f ? 11 : 8) + i * 1.7);
+          kn = 1.1 + 0.5 * Math.sin(t * 9 + i);
+        }
+        T.hip[i] = T.hip[i] * (1 - down) + h * down;
+        T.knee[i] = T.knee[i] * (1 - down) + kn * down;
+      }
+      T.headPitch = 0.25 * down; T.tailCurl = 0.3; T.wag = 0.4; T.wagSpeed = 3;
+      if (onBack) T.headRoll = 0.3 * Math.sin(t * 3);
+      if (t > 4.9) next(k);
+    },
+  },
+  zoom: {
+    label: 'Zoomies!',
+    enter(k, d) { d.n = 2 + Math.floor(Math.random() * 3); d.target = randomPoint(); },
+    update(k, d, dt) {
+      const dist = moveToward(k, d.target.x, d.target.z, 5, dt, 4.5);
+      locoPose(k, k.speedSm, dt);
+      if (dist < 0.6) { if (--d.n <= 0) return next(k); d.target = randomPoint(); }
+      if (d.t > 9) next(k);
+    },
+  },
+  tailChase: {
+    label: 'Chasing its own tail',
+    enter(k, d) { d.dir = Math.random() < 0.5 ? 1 : -1; d.dur = rand(2.8, 4); },
+    update(k, d, dt) {
+      const T = k.T;
+      const ramp = clamp(Math.min(d.t / 0.5, (d.dur - d.t) / 0.5), 0, 1);
+      k.heading += d.dir * 5.5 * ramp * dt;
+      k.speedSm = 1.2 * ramp; stepForward(k, dt);
+      locoPose(k, 1.8 * ramp + 0.06, dt);
+      T.headYaw = d.dir * 1.0 * ramp; T.headPitch = 0.2;
+      T.roll += -d.dir * 0.12 * ramp;
+      T.tailSide = -d.dir * 0.2 * ramp; T.tailBase = -1.25; T.wag = 0.1;
+      if (d.t > d.dur) next(k);
+    },
+  },
+  stretch: {
+    label: 'Big stretch',
+    enter(k, d) { d.dur = 2.8; },
+    update(k, d, dt) {
+      const T = k.T;
+      coast(k, dt);
+      const e = Math.min(ease(d.t / 0.7), ease((d.dur - d.t) / 0.7));
+      T.pitch = 0.32 * e; T.y = 0.62 - 0.1 * e;
+      T.hip[0] = T.hip[1] = -1.2 * e; T.knee[0] = T.knee[1] = 0;
+      T.hip[2] = T.hip[3] = -0.25 * (1 - e) - 0.32 * e; T.knee[2] = T.knee[3] = 0.45 * (1 - e);
+      T.headPitch = -0.55 * e; T.tailBase = -0.55; T.tailCurl = 0.35; T.wag = 0.05;
+      if (e > 0.8) T.eyes = 0.08;
+      if (d.t > d.dur) next(k);
+    },
+  },
+  nap: {
+    label: 'Heading for a nap',
+    enter(k, d) {
+      const fs = k.friend.state;
+      d.inBed = !(fs && fs.name === 'nap' && fs.inBed);
+      const alt = env.napAlt;
+      d.spot = d.inBed ? env.nap : { x: alt.x + rand(-1, 1), z: alt.z + rand(-0.6, 0.6), y: alt.y, where: alt.where };
+      d.phase = 0; d.dur = rand(6, 9);
+    },
+    update(k, d, dt) {
+      const T = k.T;
+      if (d.phase === 0) {
+        const dist = moveToward(k, d.spot.x, d.spot.z, 2.2, dt, 4);
+        locoPose(k, k.speedSm, dt);
+        if (dist < 0.25 || d.t > 8) {
+          d.phase = 1; d.t = 0;
+          k.statusEl.textContent = `Napping ${d.spot.where}`;
+        }
+        return;
+      }
+      coast(k, dt);
+      const down = ease(d.t / 0.8);
+      T.y = 0.62 - (0.32 - d.spot.y) * down + 0.008 * Math.sin(d.t * 2.2) * down;
+      for (let i = 0; i < 4; i++) {
+        const f = k.legs[i].front;
+        T.hip[i] = T.hip[i] * (1 - down) + (f ? -0.6 : -1.0) * down;
+        T.knee[i] = T.knee[i] * (1 - down) + (f ? 1.6 : 1.8) * down;
+      }
+      T.headPitch = 0.45 * down; T.headYaw = 0.5 * down; T.headRoll = 0.3 * down;
+      T.tailBase = -1.6; T.tailSide = 0.22 * down; T.tailCurl = 0.05; T.wag = 0.02; T.ear = -0.1;
+      if (down > 0.7) T.eyes = 0.08;
+      if (d.t > d.dur) { k.last = 'nap'; setState(k, 'stretch'); }
+    },
+  },
+  // playing tag: one cat chases, the other runs away
+  chaseFriend: {
+    label: k => `Chasing ${k.friend.name}`,
+    enter(k, d) {
+      d.dur = rand(4, 6);
+      if (k.friend.state.name !== 'flee') setState(k.friend, 'flee');
+    },
+    update(k, d, dt) {
+      const f = k.friend, fp = f.root.position;
+      const dist = moveToward(k, fp.x, fp.z, 4.7, dt, 5);
+      locoPose(k, k.speedSm, dt);
+      k.T.ear = -0.2; k.T.tailCurl = 0.25;
+      if (dist < 1.0 || d.t > d.dur || f.state.name !== 'flee') {
+        const tagged = dist < 1.0;
+        if (f.state.name === 'flee') { f.last = 'flee'; setState(f, auto && tagged ? 'roll' : 'idle'); }
+        k.last = 'chaseFriend';
+        next(k);
+        if (tagged) k.statusEl.textContent = `Tagged ${f.name}!`;
+      }
+    },
+  },
+  flee: {
+    label: k => `Running from ${k.friend.name}`,
+    enter(k, d) { d.dur = 8; },
+    update(k, d, dt) {
+      const p = k.root.position, c = k.friend.root.position;
+      let ax = p.x - c.x, az = p.z - c.z; const l = Math.hypot(ax, az) || 1; ax /= l; az /= l;
+      const t = { x: p.x + ax * 2.5, z: p.z + az * 2.5 };
+      clampIn(t, 1.2);
+      if (Math.hypot(t.x - p.x, t.z - p.z) < 1.2 || inObstacle(t.x, t.z, 0.3)) { // cornered: run along the edge instead
+        const sgn = Math.sin(k.heading) * -az + Math.cos(k.heading) * ax >= 0 ? 1 : -1;
+        t.x = p.x - az * 2.5 * sgn - p.x * 0.2; t.z = p.z + ax * 2.5 * sgn - p.z * 0.2;
+        clampIn(t, 1.2);
+      }
+      const tx = t.x, tz = t.z;
+      moveToward(k, tx, tz, 4.4, dt, 4);
+      locoPose(k, k.speedSm, dt);
+      k.T.ear = 0.45; k.T.tailBase = -0.7; k.T.tailCurl = 0.3;
+      if (d.t > d.dur) next(k);
+    },
+  },
+};
+
+function setLabel(k, name) {
+  const lab = S[name].label;
+  k.statusEl.textContent = typeof lab === 'function' ? lab(k) : lab;
+}
+function setState(k, name) {
+  if (k.state && k.state.name === 'pounce') k.root.position.y = 0;
+  k.C.roll = angDiff(0, k.C.roll); // unwind after full rolls
+  k.state = { name, t: 0 };
+  S[name].enter(k, k.state);
+  setLabel(k, name);
+}
+
+function next(k) {
+  if (!auto) return setState(k, 'idle');
+  const db = distBall(k);
+  const ballMoving = Math.hypot(ball.vel.x, ball.vel.z) > 0.6;
+  const friendFree = INTERRUPTIBLE.includes(k.friend.state.name);
+  const w = {
+    chase: db > 1 ? 4 : 1,
+    bat: db < 0.9 ? 3 : 0,
+    pounce: db > 1.6 && db < 4.5 && !ballMoving ? 2.5 : 0,
+    roll: 1.2, zoom: 1.1, tailChase: 0.8, stretch: 0.6, idle: ballMoving ? 1.5 : 0.8,
+    chaseFriend: friendFree ? 1.0 : 0,
+    nap: 0.6,
+  };
+  // the second cat lets the first get to the yarn more often
+  if (k.friend.state.name === 'chase' || k.friend.state.name === 'bat') w.chase *= 0.5;
+  if (k.last && ['roll', 'zoom', 'tailChase', 'stretch', 'idle', 'chaseFriend', 'flee', 'nap'].includes(k.last)) w[k.last] = 0;
+  let total = 0; for (const n in w) total += w[n];
+  let r = Math.random() * total, pick = 'chase';
+  for (const n in w) { r -= w[n]; if (r <= 0) { pick = n; break; } }
+  k.last = pick;
+  setState(k, pick);
+}
+
+// ---------- UI ----------
+let who = 'both';
+const selected = () => who === 'both' ? cats : [cats[+who]];
+const autoBtn = document.getElementById('b-auto');
+document.querySelector('.bar-inner').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.place) return setPlace(b.dataset.place);
+  if (b.dataset.who) {
+    who = b.dataset.who;
+    document.querySelectorAll('.who button').forEach(x => x.classList.toggle('on', x === b));
+    return;
+  }
+  const act = b.dataset.act;
+  if (act === 'auto') {
+    auto = !auto;
+    autoBtn.classList.toggle('on', auto); autoBtn.setAttribute('aria-pressed', auto);
+    cats.forEach(k => { if (auto && k.state.name === 'idle') next(k); });
+    return;
+  }
+  if (act === 'throw') {
+    kickBall(rand(0, TAU), rand(5, 7), 3);
+    return selected().forEach(k => setState(k, 'chase'));
+  }
+  if (act === 'chaseFriend') {
+    // with both selected, the one closer to the yarn is "it"
+    const k = who === 'both' ? (distBall(cats[0]) < distBall(cats[1]) ? cats[0] : cats[1]) : cats[+who];
+    if (k.friend.state.name === 'pounce') k.friend.root.position.y = 0;
+    return setState(k, 'chaseFriend');
+  }
+  if (act === 'pounce') {
+    const k = selected()[0];
+    if (distBall(k) < 1.4 || distBall(k) > 5) {
+      // move the yarn to a pounceable spot in front of the cat
+      const a = k.heading + rand(-0.4, 0.4), r = 2.6, p = k.root.position;
+      let t = { x: p.x + Math.sin(a) * r, z: p.z + Math.cos(a) * r };
+      clampIn(t, 1);
+      if (inObstacle(t.x, t.z, 0.3)) t = randomPoint();
+      ball.pos.set(t.x, 1.2, t.z);
+      ball.vel.set(0, 0, 0);
+    }
+  }
+  selected().forEach(k => setState(k, act));
+});
+const followEl = document.getElementById('follow');
+
+// tap the floor to drop the yarn
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  ndc.set((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObject(env.floor)[0];
+  if (!hit) return;
+  const p = { x: hit.point.x, z: hit.point.z };
+  clampIn(p, 0.6);
+  ball.pos.set(p.x, 2.2, p.z); ball.vel.set(0, 0, 0);
+  selected().forEach(k => setState(k, 'chase'));
+});
+
+addEventListener('resize', () => {
+  camera.aspect = stage.clientWidth / stage.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(stage.clientWidth, stage.clientHeight);
+});
+
+// ---------- main loop ----------
+function applyPose(k, dt) {
+  const C = k.C, T = k.T;
+  for (const n in RATES) C[n] = damp(C[n], T[n], RATES[n], dt);
+  for (let i = 0; i < 4; i++) {
+    C.hip[i] = damp(C.hip[i], T.hip[i], LEG_RATE, dt);
+    C.knee[i] = damp(C.knee[i], T.knee[i], LEG_RATE, dt);
+    C.side[i] = damp(C.side[i], T.side[i], LEG_RATE, dt);
+  }
+  k.body.position.y = C.y;
+  k.body.rotation.set(C.pitch, 0, C.roll);
+  k.neck.rotation.set(C.headPitch, C.headYaw, C.headRoll);
+  k.legs.forEach((l, i) => {
+    l.hip.rotation.set(C.hip[i], 0, C.side[i]);
+    l.knee.rotation.x = C.knee[i];
+    l.ankle.rotation.x = -(C.hip[i] + C.knee[i]) * 0.7;
+  });
+  k.wagPhase += dt * C.wagSpeed;
+  k.tailBase.rotation.x = C.tailBase;
+  k.tail.forEach((g, i) => {
+    g.rotation.x = C.tailCurl;
+    g.rotation.z = C.tailSide + C.wag * Math.sin(k.wagPhase * TAU * 0.5 - i * 0.45) * (0.3 + i / SEG);
+  });
+  k.ears.forEach(({ g, s }) => {
+    g.rotation.x = -0.15 - C.ear;
+    g.rotation.z = -s * 0.35 - s * C.ear * 0.4 + (k.earTwitch > 0 && s === k.earTwitchSide ? -s * 0.5 : 0);
+  });
+  k.eyes.forEach(e => { e.scale.y = Math.max(0.06, C.eyes); });
+}
+
+function catTick(k, dt) {
+  k.T = basePose();
+  k.state.t += dt;
+  S[k.state.name].update(k, k.state, dt);
+
+  // blinking and ear twitches
+  k.blinkT -= dt;
+  if (k.blinkT < 0) { k.blinking = 0.13; k.blinkT = rand(1.8, 5); }
+  if (k.blinking > 0) { k.blinking -= dt; k.T.eyes = 0.08; }
+  if (k.earTwitch > 0) k.earTwitch -= dt;
+  else if (Math.random() < dt * 0.25) { k.earTwitch = 0.18; k.earTwitchSide = Math.random() < 0.5 ? 1 : -1; }
+
+  // keep inside the room and out of the furniture
+  const pos = k.root.position;
+  clampIn(pos, env.bounds.r ? 0.8 : 0.5);
+  pushOut(pos, 0.45, o => o.catPass);
+  k.root.rotation.y = k.heading;
+
+  // the cat nudges the yarn when it runs or rolls into it
+  const dx = ball.pos.x - pos.x, dz = ball.pos.z - pos.z, dd = Math.hypot(dx, dz);
+  if (dd < 0.5 && dd > 1e-4 && ball.pos.y < 0.4 && k.state.name !== 'bat') {
+    const push = Math.max(1.5, k.speedSm * 1.2);
+    ball.vel.x = dx / dd * push; ball.vel.z = dz / dd * push;
+    ball.pos.x = pos.x + dx / dd * 0.5; ball.pos.z = pos.z + dz / dd * 0.5;
+  }
+}
+
+// cats don't walk through each other (unless one is mid-leap)
+function separate() {
+  const [a, b] = cats, pa = a.root.position, pb = b.root.position;
+  if (pa.y > 0.2 || pb.y > 0.2) return;
+  const dx = pb.x - pa.x, dz = pb.z - pa.z, d = Math.hypot(dx, dz), min = 0.85;
+  if (d < min && d > 1e-4) {
+    const push = (min - d) / 2;
+    pa.x -= dx / d * push; pa.z -= dz / d * push;
+    pb.x += dx / d * push; pb.z += dz / d * push;
+  }
+}
+
+const clock = new THREE.Clock();
+const camGoal = new THREE.Vector3();
+function setPlace(name) {
+  if (!PLACES[name]) name = 'bedroom';
+  env.group.visible = false;
+  env = PLACES[name]; env.group.visible = true;
+  const L = env.light;
+  scene.background.set(L.bg);
+  scene.fog = L.fog ? new THREE.Fog(L.fog[0], L.fog[1], L.fog[2]) : null;
+  hemi.color.set(L.hemi[0]); hemi.groundColor.set(L.hemi[1]); hemi.intensity = L.hemi[2];
+  ambient.intensity = L.amb;
+  sun.color.set(L.sun[0]); sun.intensity = L.sun[1]; sun.position.set(L.sun[2][0], L.sun[2][1], L.sun[2][2]);
+  cats.forEach((k, i) => {
+    const [x, z, h] = env.start.cats[i];
+    if (k.state) { setState(k, 'idle'); k.state.dur = 1 + i * 1.2; }
+    k.root.position.set(x, 0, z); k.heading = h; k.speedSm = 0;
+  });
+  ball.pos.set(env.start.ball[0], BALL_R, env.start.ball[1]); ball.vel.set(0, 0, 0);
+  controls.target.set(0, 0.5, 0); camera.position.set(env.cam[0], env.cam[1], env.cam[2]);
+  document.querySelectorAll('[data-place]').forEach(b => {
+    b.classList.toggle('on', b.dataset.place === name); b.setAttribute('aria-pressed', b.dataset.place === name);
+  });
+  try { localStorage.setItem('cat-place', name); } catch (e) {}
+}
+let savedPlace = 'bedroom';
+try { savedPlace = localStorage.getItem('cat-place') || 'bedroom'; } catch (e) {}
+setPlace(savedPlace);
+cats.forEach((k, i) => { setState(k, 'idle'); k.state.dur = 1.2 + i * 1.3; });
+
+function frame() {
+  const dt = Math.min(0.05, clock.getDelta()) * (reduceMotion ? 0.6 : 1);
+  cats.forEach(k => catTick(k, dt));
+  separate();
+  updateBall(dt);
+  cats.forEach(k => applyPose(k, dt));
+  if (env.update) env.update(dt, clock.elapsedTime);
+
+  if (followEl.checked) {
+    const sel = selected();
+    camGoal.set(0, 0, 0);
+    sel.forEach(k => camGoal.add(k.root.position));
+    camGoal.multiplyScalar(1 / sel.length); camGoal.y = 0.5;
+    const before = controls.target.clone();
+    controls.target.lerp(camGoal, 1 - Math.exp(-2.5 * dt));
+    camera.position.add(controls.target.clone().sub(before));
+  }
+  controls.update();
+  env.walls.forEach(w => { w.g.visible = !w.hide(); });
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</html>
